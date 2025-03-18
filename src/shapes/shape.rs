@@ -1,12 +1,12 @@
-use crate::Hit;
-use crate::Ray;
-use crate::math::vec3::Vec3;
+use crate::hit::Hit;
+use crate::material::Material;
+use crate::ray::Ray;
 
 use super::plane::Plane;
 use super::sphere::Sphere;
 pub trait Shape {
     fn hit(&self, ray: &Ray) -> Option<Hit>;
-    fn get_color(&self) -> Vec3;
+    fn get_material(&self) -> &Material;
     fn as_any(&self) -> &dyn std::any::Any;
 }
 

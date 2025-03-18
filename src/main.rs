@@ -1,17 +1,15 @@
-mod colors;
 mod hit;
 mod lights;
 mod logic;
+mod material;
 mod math;
 mod ray;
 mod shapes;
 
-use colors::*;
-use hit::Hit;
 use lights::point_light::PointLight;
 use logic::cast_ray;
-use math::{vec2::Vec2, vec3::Vec3};
-use ray::Ray;
+use material::{CHROME, RUBY};
+use math::vec3::Vec3;
 
 use sdl2::pixels::PixelFormatEnum;
 use sdl2::render::TextureAccess;
@@ -41,8 +39,8 @@ fn main() -> Result<(), String> {
         .create_texture(PixelFormatEnum::RGB24, TextureAccess::Streaming, 800, 600)
         .expect("");
 
-    let sphere1 = Sphere::new(Vec3::from(0.75, 0.0, 0.0), 0.5, RED);
-    let sphere2 = Sphere::new(Vec3::from(-0.75, 0.0, 0.0), 0.5, BLUE);
+    let sphere1 = Sphere::new(Vec3::from(0.75, 0.0, 0.0), 0.5, CHROME);
+    let sphere2 = Sphere::new(Vec3::from(-0.75, 0.0, 0.0), 0.5, RUBY);
     let shapes: Vec<Box<dyn Shape>> = vec![Box::new(sphere1), Box::new(sphere2)];
 
     let light = PointLight::new(Vec3 {

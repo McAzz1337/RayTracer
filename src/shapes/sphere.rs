@@ -1,19 +1,23 @@
-use crate::Hit;
-use crate::Ray;
-use crate::Vec3;
-
-use super::shape::Shape;
+use crate::hit::Hit;
+use crate::material::Material;
+use crate::math::vec3::Vec3;
+use crate::ray::Ray;
+use crate::shapes::shape::Shape;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Sphere {
     pos: Vec3,
     radius: f64,
-    color: Vec3,
+    material: Material,
 }
 
 impl Sphere {
-    pub fn new(pos: Vec3, radius: f64, color: Vec3) -> Sphere {
-        Sphere { pos, radius, color }
+    pub fn new(pos: Vec3, radius: f64, material: Material) -> Sphere {
+        Sphere {
+            pos,
+            radius,
+            material,
+        }
     }
 }
 impl Shape for Sphere {
@@ -47,8 +51,8 @@ impl Shape for Sphere {
         hit
     }
 
-    fn get_color(&self) -> Vec3 {
-        self.color
+    fn get_material(&self) -> &Material {
+        &self.material
     }
 
     fn as_any(&self) -> &dyn std::any::Any {

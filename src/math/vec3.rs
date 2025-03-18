@@ -1,6 +1,6 @@
 use std::ops::{Add, Mul, Neg, Sub};
 
-use crate::Vec2;
+use crate::math::vec2::Vec2;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Vec3 {

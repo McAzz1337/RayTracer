@@ -1,12 +1,12 @@
-use crate::BG;
-use crate::Hit;
-use crate::PointLight;
-use crate::Ray;
-use crate::Shape;
+use crate::hit::Hit;
+use crate::lights::point_light::PointLight;
+use crate::math::{vec2::Vec2, vec3::Vec3};
+use crate::ray::Ray;
+use crate::shapes::shape::Shape;
 use crate::{HEIGHT, WIDTH};
-use crate::{Vec2, Vec3};
 
 const MAX_ITERATIONS: u8 = 2;
+const BACKGROUND: Vec3 = Vec3::from(0.3, 0.3, 0.3);
 
 pub fn cast_ray(x: usize, y: usize, shapes: &Vec<Box<dyn Shape>>, light: &PointLight) -> Vec3 {
     let mut uv = Vec2::from(x as f64 / WIDTH as f64, y as f64 / HEIGHT as f64);
@@ -21,7 +21,7 @@ pub fn cast_ray(x: usize, y: usize, shapes: &Vec<Box<dyn Shape>>, light: &PointL
     let hit = hit_check(&ray, shapes, None);
 
     hit.map(|h| bounce_ray(&h, shapes, light, 0).unwrap_or(get_hit_color(&h, light)))
-        .unwrap_or(BG)
+        .unwrap_or(BACKGROUND)
 }
 
 fn bounce_ray(
@@ -49,10 +49,17 @@ fn hit_is_closer(new_hit: &Hit, old_hit: &Hit) -> bool {
 }
 
 fn get_hit_color(hit: &Hit, light: &PointLight) -> Vec3 {
-    let color = hit.shape.get_color();
-    let to_light = light.pos - hit.point;
-    let phi = to_light.dot(&hit.normal).max(0.0);
-    phi * color
+    let to_light = (light.pos - hit.point).normalize();
+    let reflected = hit.incidence.reflect(&hit.normal);
+    let falloff = to_light.dot(&reflected);
+    let specular = falloff.powf(4.0);
+
+    let mat = &hit.shape.get_material();
+    shade(&hit.normal, &to_light) * (mat.ambient + mat.diffuse + specular * mat.specular)
+}
+
+fn shade(normal: &Vec3, to_light: &Vec3) -> f64 {
+    to_light.dot(normal).max(0.0)
 }
 
 fn hit_check(
