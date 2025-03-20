@@ -1,4 +1,7 @@
-use std::ops::{Add, Mul, Neg, Sub};
+use std::{
+    iter::Sum,
+    ops::{Add, Div, Mul, Neg, Sub},
+};
 
 use crate::math::vec2::Vec2;
 
@@ -119,6 +122,23 @@ impl Mul<Vec3> for f64 {
             y: self * rhs.y,
             z: self * rhs.z,
         }
+    }
+}
+
+impl Div<f64> for Vec3 {
+    type Output = Vec3;
+    fn div(self, rhs: f64) -> Self::Output {
+        Vec3 {
+            x: self.x / rhs,
+            y: self.y / rhs,
+            z: self.z / rhs,
+        }
+    }
+}
+
+impl Sum for Vec3 {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        iter.fold(Vec3::new(), |a, b| a + b)
     }
 }
 
