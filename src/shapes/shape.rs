@@ -4,7 +4,7 @@ use crate::ray::Ray;
 
 use super::plane::Plane;
 use super::sphere::Sphere;
-pub trait Shape {
+pub trait Shape: Send + Sync {
     fn hit(&self, ray: &Ray) -> Option<Hit>;
     fn get_material(&self) -> &Material;
     fn as_any(&self) -> &dyn std::any::Any;

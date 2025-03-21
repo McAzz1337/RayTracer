@@ -4,9 +4,31 @@ use crate::math::{vec2::Vec2, vec3::Vec3};
 use crate::ray::Ray;
 use crate::shapes::shape::Shape;
 use crate::{HEIGHT, WIDTH};
+use rand::Rng;
 
 const MAX_ITERATIONS: u8 = 2;
 const BACKGROUND: Vec3 = Vec3::from(0.3, 0.3, 0.3);
+const CLIP_PLANE_Z: f64 = -1.0;
+const ORIGIN_Z: f64 = -2.0;
+
+fn generate_rays(origin: Vec3, uv: Vec2, n: usize) -> Vec<Ray> {
+    let mut offsets = vec![Vec3::new()];
+    offsets.append(
+        &mut (0..n)
+            .map(|_| {
+                let mut rng = rand::rng();
+                let x = rng.random_range(-1.0_f64..1.0_f64) * 0.001;
+                let y = rng.random_range(-1.0_f64..1.0_f64) * 0.001;
+                Vec3::from(x, y, 0.0)
+            })
+            .collect(),
+    );
+    offsets
+        .iter()
+        .map(|o| origin + *o)
+        .map(|o| Ray::new(o, (Vec3::from_vec2(&uv, CLIP_PLANE_Z) - o).normalize()))
+        .collect()
+}
 
 pub fn cast_ray(x: usize, y: usize, shapes: &Vec<Box<dyn Shape>>, light: &PointLight) -> Vec3 {
     let mut uv = Vec2::from(x as f64 / WIDTH as f64, y as f64 / HEIGHT as f64);
@@ -15,13 +37,16 @@ pub fn cast_ray(x: usize, y: usize, shapes: &Vec<Box<dyn Shape>>, light: &PointL
     uv.x *= aspect;
     uv.y *= -1.0;
 
-    let origin = Vec3::from(0.0, 0.0, -2.0);
-    let ray = Ray::new(origin, (Vec3::from_vec2(&uv, -1.0) - origin).normalize());
-
-    let hit = hit_check(&ray, shapes, None);
-
-    hit.map(|h| bounce_ray(&h, shapes, light, 0).unwrap_or(get_hit_color(&h, light)))
-        .unwrap_or(BACKGROUND)
+    let origin = Vec3::from(0.0, 0.0, ORIGIN_Z);
+    let rays = generate_rays(origin, uv, 5);
+    rays.iter()
+        .map(|ray| {
+            hit_check(&ray, shapes, None)
+                .map(|h| bounce_ray(&h, shapes, light, 0).unwrap_or(get_hit_color(&h, light)))
+                .unwrap_or(BACKGROUND)
+        })
+        .sum::<Vec3>()
+        / rays.len() as f64
 }
 
 fn bounce_ray(
@@ -52,7 +77,7 @@ fn get_hit_color(hit: &Hit, light: &PointLight) -> Vec3 {
     let to_light = (light.pos - hit.point).normalize();
     let reflected = hit.incidence.reflect(&hit.normal);
     let falloff = to_light.dot(&reflected);
-    let specular = falloff.powf(4.0);
+    let specular = falloff.powf(8.0);
 
     let mat = &hit.shape.get_material();
     shade(&hit.normal, &to_light) * (mat.ambient + mat.diffuse + specular * mat.specular)

@@ -17,6 +17,8 @@ use sdl2::video::Window;
 use sdl2::{event::Event, keyboard::Keycode, render::Canvas};
 use shapes::shape::Shape;
 use shapes::sphere::Sphere;
+use std::sync::Arc;
+use std::thread::{self, Thread};
 use std::time::Duration;
 
 const WIDTH: usize = 1440;
@@ -41,7 +43,7 @@ fn main() -> Result<(), String> {
 
     let sphere1 = Sphere::new(Vec3::from(0.75, 0.0, 0.0), 0.5, CHROME);
     let sphere2 = Sphere::new(Vec3::from(-0.75, 0.0, 0.0), 0.5, RUBY);
-    let shapes: Vec<Box<dyn Shape>> = vec![Box::new(sphere1), Box::new(sphere2)];
+    let shapes: Arc<Vec<Box<dyn Shape>>> = Arc::new(vec![Box::new(sphere1), Box::new(sphere2)]);
 
     let light = PointLight::new(Vec3 {
         x: 0.0,
@@ -49,17 +51,64 @@ fn main() -> Result<(), String> {
         z: -0.5,
     });
 
+    let mut threads = vec![];
+    let num_threads = 7;
+    let thread_range = HEIGHT / num_threads;
+    let mut i = 0;
+    while i < num_threads {
+        let light = light.clone();
+        let shapes = shapes.clone();
+        let t = thread::spawn(move || {
+            let start = i * thread_range;
+            let end = if i < num_threads {
+                (i + 1) * thread_range
+            } else {
+                WIDTH * HEIGHT - 1
+            };
+            println!("thread start {} end {}", start * WIDTH, end * WIDTH);
+            let mut res = vec![];
+            for y in start..end {
+                for x in 0..WIDTH {
+                    let c = cast_ray(x, y, &shapes, &light);
+                    let index = (y * WIDTH + x) * 3;
+                    let r = (c.x * 255.0) as u8;
+                    let g = (c.y * 255.0) as u8;
+                    let b = (c.z * 255.0) as u8;
+                    res.push((index, r, g, b))
+                }
+            }
+            res
+        });
+        threads.push(t);
+        i += 1;
+    }
+
     let mut buffer = vec![0u8; WIDTH * HEIGHT * 3];
-    for y in 0..HEIGHT as usize {
-        for x in 0..WIDTH as usize {
-            let c = cast_ray(x, y, &shapes, &light);
-            let index = (y * WIDTH + x) * 3;
-            buffer[index] = (c.x * 255.0) as u8;
-            buffer[index + 1] = (c.y * 255.0) as u8;
-            buffer[index + 2] = (c.z * 255.0) as u8;
+    for t in threads {
+        match t.join() {
+            Ok(v) => {
+                v.iter().for_each(|x| {
+                    let (index, r, g, b) = *x;
+                    buffer[index] = r;
+                    buffer[index + 1] = g;
+                    buffer[index + 2] = b;
+                });
+            }
+            Err(_) => println!("Something went wrong"),
         }
     }
 
+    // for y in 0..HEIGHT as usize {
+    //     for x in 0..WIDTH as usize {
+    //         let c = cast_ray(x, y, &shapes, &light);
+    //         let index = (y * WIDTH + x) * 3;
+    //         buffer[index] = (c.x * 255.0) as u8;
+    //         buffer[index + 1] = (c.y * 255.0) as u8;
+    //         buffer[index + 2] = (c.z * 255.0) as u8;
+    //     }
+    // }
+
+    println!("Done");
     texture.update(None, &buffer, WIDTH * 3).expect("");
     let mut event_pump = sdl_context.event_pump()?;
     'running: loop {

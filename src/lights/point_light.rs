@@ -1,5 +1,6 @@
 use crate::math::vec3::Vec3;
 
+#[derive(Clone, Copy)]
 pub struct PointLight {
     pub pos: Vec3,
 }
