@@ -6,7 +6,7 @@ use crate::shapes::shape::Shape;
 use crate::{HEIGHT, WIDTH};
 use rand::Rng;
 
-const MAX_ITERATIONS: u8 = 2;
+const MAX_ITERATIONS: u8 = 10;
 const BACKGROUND: Vec3 = Vec3::from(0.3, 0.3, 0.3);
 const CLIP_PLANE_Z: f64 = -1.0;
 const ORIGIN_Z: f64 = -2.0;
