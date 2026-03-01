@@ -52,7 +52,7 @@ fn main() -> Result<(), String> {
     });
 
     let mut threads = vec![];
-    let num_threads = 7;
+    let num_threads = 8;
     let thread_range = HEIGHT / num_threads;
     let mut i = 0;
     while i < num_threads {
@@ -60,11 +60,7 @@ fn main() -> Result<(), String> {
         let shapes = shapes.clone();
         let t = thread::spawn(move || {
             let start = i * thread_range;
-            let end = if i < num_threads {
-                (i + 1) * thread_range
-            } else {
-                WIDTH * HEIGHT - 1
-            };
+            let end = (i + 1) * thread_range;
             println!("thread start {} end {}", start * WIDTH, end * WIDTH);
             let mut res = vec![];
             for y in start..end {
@@ -97,16 +93,6 @@ fn main() -> Result<(), String> {
             Err(_) => println!("Something went wrong"),
         }
     }
-
-    // for y in 0..HEIGHT as usize {
-    //     for x in 0..WIDTH as usize {
-    //         let c = cast_ray(x, y, &shapes, &light);
-    //         let index = (y * WIDTH + x) * 3;
-    //         buffer[index] = (c.x * 255.0) as u8;
-    //         buffer[index + 1] = (c.y * 255.0) as u8;
-    //         buffer[index + 2] = (c.z * 255.0) as u8;
-    //     }
-    // }
 
     println!("Done");
     texture.update(None, &buffer, WIDTH * 3).expect("");
